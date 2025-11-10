@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UmaGuessr Image Sources</title>
+  <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>UmaGuessr Image Sources</h1>
+  <div id="content">Loading...</div>
+
+  <script id="template" type="text/x-handlebars-template">
+    {{#each this}}
+        <div class="entry">
+        <h2>Character: {{id}}</h2>
+        {{#if artworks}}
+            {{#each artworks}}
+            <div class="artwork">
+                <div class="artist">Artist: {{artist}}</div>
+                <div>Service: {{service}}</div>
+                {{#if external_urls}}
+                {{#each external_urls}}
+                    {{#if (eq this "n/a")}}
+                    <div>{{this}}</div>
+                    {{else}}
+                    <div><a href="{{this}}" target="_blank">{{this}}</a></div>
+                    {{/if}}
+                {{/each}}
+                {{else}}
+                <div>No external URLs</div>
+                {{/if}}
+            </div>
+            {{/each}}
+        {{else}}
+            <p>No artworks found.</p>
+        {{/if}}
+        </div>
+    {{/each}}
+    </script>
+
+  <script>
+  Handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+  });
+
+  const jsonURL = "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/sources/sources.json";
+
+  fetch(jsonURL)
+    .then(response => {
+      if (!response.ok) throw new Error("Failed to fetch JSON: " + response.status);
+      return response.json();
+    })
+    .then(data => {
+      const source = document.getElementById("template").innerHTML;
+      const template = Handlebars.compile(source);
+      document.getElementById("content").innerHTML = template(data);
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("content").innerText = "Error loading data.";
+    });
+</script>
+
+</body>
+</html>
