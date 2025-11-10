@@ -13,10 +13,11 @@
   <script id="template" type="text/x-handlebars-template">
     {{#each this}}
         <div class="entry">
-        <h2>Character: {{id}}</h2>
+        <h2>{{getNameById id}}</h2>
         {{#if artworks}}
             {{#each artworks}}
             <div class="artwork">
+                <h3>#{{addOne @index}}</h3>
                 <div class="artist">Artist: {{artist}}</div>
                 <div>Service: {{service}}</div>
                 {{#if external_urls}}
@@ -40,27 +41,71 @@
     </script>
 
   <script>
-  Handlebars.registerHelper('eq', function(a, b) {
-    return a === b;
+    var mergedData;
+    const jsonURL = "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/sources/sources.json";
+
+    Handlebars.registerHelper('addOne', function(value) {
+    return value + 1;
   });
-
-  const jsonURL = "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/sources/sources.json";
-
-  fetch(jsonURL)
-    .then(response => {
-      if (!response.ok) throw new Error("Failed to fetch JSON: " + response.status);
-      return response.json();
-    })
-    .then(data => {
-      const source = document.getElementById("template").innerHTML;
-      const template = Handlebars.compile(source);
-      document.getElementById("content").innerHTML = template(data);
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById("content").innerText = "Error loading data.";
+    Handlebars.registerHelper('eq', function(a, b) {
+      return a === b;
     });
-</script>
+
+    Handlebars.registerHelper('getNameById', function(id) {
+    if (!mergedData) return id;
+    const item = mergedData.find(entry => entry.id === id);
+    return item ? item.proper : id;
+});
+
+    fetch(jsonURL)
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to fetch JSON: " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const source = document.getElementById("template").innerHTML;
+        const template = Handlebars.compile(source);
+        document.getElementById("content").innerHTML = template(data);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("content").innerText = "Error loading data.";
+      });
+
+      const umaList = [
+        "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/global-list.json",
+        "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/jp-list.json",
+        "https://raw.githubusercontent.com/min-808/UmaGuessr/refs/heads/main/src/assets/other-list.json"
+      ];
+
+      Promise.all(umaList.map(url => fetch(url).then(res => {
+    if (!res.ok) throw new Error("Failed to fetch: " + url);
+    return res.json();
+})))
+.then(allData => {
+    mergedData = [].concat(...allData);
+
+    fetch(jsonURL)
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to fetch JSON: " + response.status);
+        return response.json();
+      })
+      .then(data => {
+        const source = document.getElementById("template").innerHTML;
+        const template = Handlebars.compile(source);
+        document.getElementById("content").innerHTML = template(data);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("content").innerText = "Error loading data.";
+      });
+})
+.catch(err => {
+    console.error(err);
+    document.getElementById("content").innerText = "Error loading data.";
+});
+
+  </script>
 
 </body>
 </html>
